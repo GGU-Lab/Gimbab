@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+pydantic
+psutil
+importlib-metadata ; python_version < "3.8"
