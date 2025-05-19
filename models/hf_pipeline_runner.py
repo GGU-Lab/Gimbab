@@ -26,7 +26,7 @@ _cached_models = {}
 # - 동일 task/model 조합은 캐시 재사용
 # ---------------------------------------------------
 def run(
-    input: dict,
+    input: dict | str | list,
     task: str = "sentiment-analysis",
     model_name: str = None,
     reload: bool = False,
@@ -36,10 +36,16 @@ def run(
     HuggingFace pipeline 실행기
 
     ✅ 인자:
-    - input: {"text": ...} 또는 기타 dict 입력
+    - input: dict, str, list 모두 지원
+        - {"text": "..."} 형태 (기본 권장)
+        - 단일 문자열 또는 리스트 형태도 가능
     - task: 감성 분석, 번역, 요약 등 pipeline 태스크
     - model_name: 사용할 모델 이름 (예: beomi/kcbert-base)
     - reload: True일 경우 기존 캐시 무시하고 재로딩
+
+    📌 주의사항:
+    - model1 → model2 연결 시, input이 list/dict 형태일 수 있음
+    - 가능한한 유연하게 처리되도록 설계
     """
 
     # ✅ 모델 캐싱 키 생성: 예) "sentiment-analysis:beomi/kcbert-base"
@@ -57,11 +63,22 @@ def run(
 
     if task in ["sentiment-analysis", "ner", "zero-shot-classification"]:
         # ✅ 이 태스크들은 문자열(text) 또는 단순 dict 입력을 기대
-        text = input.get("text", "")
-        return pipe(text)
+
+        if isinstance(input, str):
+            return pipe(input)
+
+        elif isinstance(input, dict):
+            return pipe(input.get("text", str(input)))
+
+        elif isinstance(input, list):
+            # ✅ list of text or dict: 각각 개별 처리
+            return [pipe(i.get("text", str(i)) if isinstance(i, dict) else str(i)) for i in input]
+
+        else:
+            raise ValueError(f"❌ 지원되지 않는 입력 형식: {type(input)}")
 
     elif task in ["translation", "summarization", "text2text-generation"]:
-        # ✅ 이 태스크들은 dict 또는 텍스트 시퀀스를 기대
+        # ✅ 이 태스크들은 dict, str, list 모두 가능
         return pipe(input)
 
     else:

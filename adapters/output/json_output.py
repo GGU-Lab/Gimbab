@@ -1,7 +1,7 @@
 """
 📦 Output Adapter: json_output
 ──────────────────────────────────────────────
-- 모델 실행 결과(리스트, 딕셔너리 등)를 보기 좋게 JSON 문자열로 변환
+- 모델 실행 결과(리스트, 딕셔너리 등)를 보기 좋게 JSON-compatible 객체로 변환
 - 주로 파이프라인의 마지막 노드로 사용됨
 - 직렬화 후 출력: 프론트 전달, 로그 출력 등에 적합
 
@@ -12,35 +12,53 @@
 ]
 
 📌 출력 예시:
-"[
+[
   {
-    \"label\": \"POSITIVE\",
-    \"score\": 0.98
+    "label": "POSITIVE",
+    "score": 0.98
   },
   {
-    \"label\": \"NEGATIVE\",
-    \"score\": 0.02
+    "label": "NEGATIVE",
+    "score": 0.02
   }
-]"
+]
 """
 
-import json
+import traceback
+from fastapi.encoders import jsonable_encoder
+from utils.serialization import to_serializable
 
 # ---------------------------------------------------
-# 📌 JSON 직렬화 실행 함수
-# - input: dict, list 등 JSON 직렬화 가능한 구조체
-# - indent, ensure_ascii 등은 파라미터 커스터마이징 가능
+# 📌 JSON-compatible 변환 실행 함수
 # ---------------------------------------------------
 def run(input: any, **params):
     """
-    📌 입력값을 JSON 문자열로 직렬화하여 반환
+    📌 입력값을 JSON-compatible 객체로 변환하여 반환
 
     ✅ 인자:
     - input: dict 또는 list 형태의 실행 결과
-    - **params: json.dumps에 넘길 추가 설정 (예: indent, ensure_ascii 등)
+    - **params: 향후 확장 가능 (미사용)
 
-    ✅ 기본 설정:
-    - indent=2: 보기 좋게 들여쓰기
-    - ensure_ascii=False: 한글 등 유니코드 출력 유지
+    ✅ 내부 처리 흐름:
+    1. to_serializable: numpy, tensor 등 불가능 타입 정리
+    2. jsonable_encoder: FastAPI가 응답으로 반환 가능하도록 변환
     """
-    return json.dumps(input, ensure_ascii=False, indent=2)
+    print("🚀 [json_output] run() 시작됨")
+    print(f"📥 원본 input 타입: {type(input)}")
+
+    try:
+        # ✅ 내부 타입을 직렬화 가능하게 변환
+        safe_input = to_serializable(input)
+        print("✅ 최종 직렬화 대상 데이터:")
+        print(safe_input)
+
+        # ✅ FastAPI 응답에서 안전하게 처리할 수 있도록 jsonable_encoder 적용
+        encoded = jsonable_encoder(safe_input)
+        print("✅ FastAPI jsonable_encoder 처리 완료")
+
+        return encoded
+
+    except Exception as e:
+        print("❌ JSON 출력 직전 예외 발생:")
+        traceback.print_exc()
+        raise 

@@ -2,6 +2,7 @@
 # - 클라이언트로부터 JSON 형식의 파이프라인 실행 요청을 받음
 # - pipeline_graph_runner.py를 통해 실행 로직을 위임
 # - 결과를 JSON 형식으로 반환
+# uvicorn main:app --reload
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
