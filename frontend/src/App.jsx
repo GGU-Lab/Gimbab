@@ -1,43 +1,69 @@
-import React, { useCallback } from 'react';
 import {
   ReactFlow,
-  MiniMap,
-  Controls,
   Background,
-  useNodesState,
-  useEdgesState,
+  Controls,
+  MiniMap,
   addEdge,
-} from '@xyflow/react';
- 
-import '@xyflow/react/dist/style.css';
- 
+  useNodesState,
+  useEdgesState
+} from "@xyflow/react"; 
+import "@xyflow/react/dist/style.css";
+import InputNode from "@/components/nodes/InputNode";
+import ModelNode from "@/components/nodes/ModelNode";
+import OutputNode from "@/components/nodes/OutputNode";
+
+const nodeTypes = {
+  inputNode: InputNode,
+  modelNode: ModelNode,
+  outputNode: OutputNode,
+};
+
 const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
+  {
+    id: "input",
+    type: "inputNode",
+    data: { label: "Text Input" },
+    position: { x: 100, y: 100 },
+  },
+  {
+    id: "model",
+    type: "modelNode",
+    data: { label: "KcBERT" },
+    position: { x: 300, y: 100 },
+  },
+  {
+    id: "output",
+    type: "outputNode",
+    data: { label: "JSON Output" },
+    position: { x: 500, y: 100 },
+  },
 ];
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
- 
-export default function App() {
+
+const initialEdges = [
+  { id: "e1-2", source: "input", target: "model" },
+  { id: "e2-3", source: "model", target: "output" },
+];
+
+export default function PipelineBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
- 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
- 
+
+  const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
+
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: "100vw", height: "100vh" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={nodeTypes}
+        fitView
       >
-        <Controls />
+        <Background />
         <MiniMap />
-        <Background variant="dots" gap={12} size={1} />
+        <Controls />
       </ReactFlow>
     </div>
   );
