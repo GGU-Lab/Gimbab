@@ -1,3 +1,9 @@
+# 사용 라이브러리
+- mui (기본 UI)
+- reactflow (그래프)
+
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

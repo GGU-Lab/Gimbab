@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -5,12 +6,16 @@ import {
   MiniMap,
   addEdge,
   useNodesState,
-  useEdgesState
-} from "@xyflow/react"; 
-import "@xyflow/react/dist/style.css";
-import InputNode from "@/components/nodes/InputNode";
-import ModelNode from "@/components/nodes/ModelNode";
-import OutputNode from "@/components/nodes/OutputNode";
+  useEdgesState,
+} from '@xyflow/react';
+
+import InputNode from '@/components/nodes/InputNode';
+import ModelNode from '@/components/nodes/ModelNode';
+import OutputNode from '@/components/nodes/OutputNode';
+
+import Sidebar from '@/components/panels/Sidebar';
+import Topbar from '@/components/panels/Topbar';
+import PropertyPanel from '@/components/panels/PropertyPanel';
 
 const nodeTypes = {
   inputNode: InputNode,
@@ -18,53 +23,77 @@ const nodeTypes = {
   outputNode: OutputNode,
 };
 
-const initialNodes = [
-  {
-    id: "input",
-    type: "inputNode",
-    data: { label: "Text Input" },
-    position: { x: 100, y: 100 },
-  },
-  {
-    id: "model",
-    type: "modelNode",
-    data: { label: "KcBERT" },
-    position: { x: 300, y: 100 },
-  },
-  {
-    id: "output",
-    type: "outputNode",
-    data: { label: "JSON Output" },
-    position: { x: 500, y: 100 },
-  },
-];
+let nodeId = 0;
 
-const initialEdges = [
-  { id: "e1-2", source: "input", target: "model" },
-  { id: "e2-3", source: "model", target: "output" },
-];
+export default function App() {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selected, setSelected] = useState(null);
 
-export default function PipelineBuilder() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const onConnect = (params) => {
+    if (!params.source || !params.target) return;
+    setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds));
+  };
 
-  const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
+  const onInit = useCallback((reactFlowInstance) => {
+    reactFlowInstance.fitView();
+  }, []);
+
+  // 드래그 오버 시 기본 동작 방지
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // 캔버스에 드롭 시 노드 추가
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!type) return;
+
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const position = {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      };
+
+      const newNode = {
+        id: `node-${nodeId++}`,
+        type,
+        position,
+        data: { label: `New ${type}` },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [setNodes]
+  );
 
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        fitView
-      >
-        <Background />
-        <MiniMap />
-        <Controls />
-      </ReactFlow>
+    <div className="w-screen h-screen flex flex-col">
+      <Topbar onRun={() => alert('실행')} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 relative" onDrop={onDrop} onDragOver={onDragOver}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={onInit}
+            nodeTypes={nodeTypes}
+            fitView
+            onNodeClick={(_, node) => setSelected(node)}
+          >
+            <Background color="#e5e7eb" />
+            <MiniMap />
+            <Controls position="bottom-left" />
+          </ReactFlow>
+        </div>
+        <PropertyPanel selectedNode={selected} />
+      </div>
     </div>
   );
 }
