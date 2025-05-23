@@ -1,30 +1,15 @@
-"""
-📦 Model Adapter: hf_pipeline_runner
-──────────────────────────────────────────────
-- HuggingFace의 transformers.pipeline을 기반으로 동작
-- 다양한 태스크(sentiment-analysis, ner, translation 등)에 대응 가능
-- 모델 이름과 태스크명을 기반으로 동적으로 pipeline 생성
-- 실행 속도를 위해 캐싱 구조(_cached_models) 사용
-
-📌 입력 예시:
-{
-    "text": "오늘 기분 좋아요"
-}
-
-📌 파라미터 예시:
-task="sentiment-analysis", model_name="beomi/kcbert-base"
-"""
-
 from transformers import pipeline
 
-# ✅ 모델 인스턴스 캐싱 (task:모델명 기준)
+# ✅ 모델 캐시 저장소
+# - 동일 task/model_name 조합은 중복 로딩 없이 재사용
 _cached_models = {}
 
-# ---------------------------------------------------
-# 📌 모델 실행 함수
-# - 입력 데이터를 받아 지정한 task로 추론 수행
-# - 동일 task/model 조합은 캐시 재사용
-# ---------------------------------------------------
+# ----------------------------------------------------
+# 📌 모델 실행기 (Model Adapter)
+# - HuggingFace pipeline 기반으로 다양한 task 처리
+# - 입력 형식에 따라 분기 처리
+# - zero-shot 등 특수 태스크는 별도 로직 적용
+# ----------------------------------------------------
 def run(
     input: dict | str | list,
     task: str = "sentiment-analysis",
@@ -32,55 +17,62 @@ def run(
     reload: bool = False,
     **kwargs
 ):
-    """
-    HuggingFace pipeline 실행기
-
-    ✅ 인자:
-    - input: dict, str, list 모두 지원
-        - {"text": "..."} 형태 (기본 권장)
-        - 단일 문자열 또는 리스트 형태도 가능
-    - task: 감성 분석, 번역, 요약 등 pipeline 태스크
-    - model_name: 사용할 모델 이름 (예: beomi/kcbert-base)
-    - reload: True일 경우 기존 캐시 무시하고 재로딩
-
-    📌 주의사항:
-    - model1 → model2 연결 시, input이 list/dict 형태일 수 있음
-    - 가능한한 유연하게 처리되도록 설계
-    """
-
-    # ✅ 모델 캐싱 키 생성: 예) "sentiment-analysis:beomi/kcbert-base"
+    # ✅ 캐시 키 구성: task + model_name
     key = f"{task}:{model_name or 'default'}"
 
-    # 🔄 캐시가 없거나 reload 요청 시 새로 로딩
+    # ✅ 모델 캐싱: zero-shot은 candidate_labels가 실행 시점마다 다를 수 있어 제외
     if reload or key not in _cached_models:
-        _cached_models[key] = pipeline(task, model=model_name)
+        if task == "zero-shot-classification":
+            # ⚠️ zero-shot은 매번 candidate_labels가 다를 수 있으므로 캐시 생략
+            pipe = pipeline(task, model=model_name)
+        else:
+            # 일반 태스크는 캐시 등록
+            _cached_models[key] = pipeline(task, model=model_name)
+            pipe = _cached_models[key]
+    else:
+        pipe = _cached_models[key]
 
-    pipe = _cached_models[key]
+    # ----------------------------------------------------
+    # ✅ 태스크별 입력 처리 분기
+    # ----------------------------------------------------
 
-    # ---------------------------------------------------
-    # ✅ 태스크 유형별 입력 처리
-    # ---------------------------------------------------
-
-    if task in ["sentiment-analysis", "ner", "zero-shot-classification"]:
-        # ✅ 이 태스크들은 문자열(text) 또는 단순 dict 입력을 기대
-
+    # 1. 감성 분석, NER 등: text 입력이 필요
+    if task in ["sentiment-analysis", "ner"]:
         if isinstance(input, str):
             return pipe(input)
-
         elif isinstance(input, dict):
-            return pipe(input.get("text", str(input)))
-
+            return pipe(input.get("text", str(input)))  # {"text": "..."} 구조 기대
         elif isinstance(input, list):
-            # ✅ list of text or dict: 각각 개별 처리
-            return [pipe(i.get("text", str(i)) if isinstance(i, dict) else str(i)) for i in input]
-
+            return [
+                pipe(i.get("text", str(i)) if isinstance(i, dict) else str(i))
+                for i in input
+            ]
         else:
             raise ValueError(f"❌ 지원되지 않는 입력 형식: {type(input)}")
 
+    # 2. zero-shot classification: 입력 문장 + candidate_labels 필요
+    elif task == "zero-shot-classification":
+        # ✅ 입력 텍스트 추출
+        if isinstance(input, dict):
+            text = input.get("text", "")
+        else:
+            text = str(input)
+
+        # ✅ candidate_labels 추출 및 문자열 → 리스트 처리
+        candidate_labels = kwargs.get("candidate_labels", [])
+        if isinstance(candidate_labels, str):
+            candidate_labels = [x.strip() for x in candidate_labels.split(",")]
+
+        # 🚨 필수 파라미터 누락 시 예외 발생
+        if not candidate_labels:
+            raise ValueError("❌ candidate_labels가 zero-shot-classification에 필요합니다.")
+
+        return pipe(text, candidate_labels=candidate_labels)
+
+    # 3. 번역, 요약, 텍스트 생성 계열: pipe(input)만으로 동작
     elif task in ["translation", "summarization", "text2text-generation"]:
-        # ✅ 이 태스크들은 dict, str, list 모두 가능
         return pipe(input)
 
+    # 4. 기타 태스크 (fallback): string 처리
     else:
-        # 🚨 정의되지 않은 태스크: fallback 처리
         return pipe(str(input))

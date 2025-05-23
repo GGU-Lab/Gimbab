@@ -4,4 +4,5 @@ pydantic
 transformers
 torch     
 psutil
+sentencepiece
 importlib-metadata; python_version < "3.8"
