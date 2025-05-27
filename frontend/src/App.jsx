@@ -18,6 +18,7 @@ import Topbar from '@/components/panels/Topbar';
 import PropertyPanel from '@/components/panels/PropertyPanel';
 import { usePipelineToJson } from '@/hooks/usePipelineToJson';
 import { runPipeline } from '@/services/pipelineAPI';
+import './index.css';
 
 const nodeTypes = {
   inputNode: InputNode,
@@ -171,7 +172,7 @@ export default function App() {
       <div className="flex items-center justify-between px-4 py-2 border-b bg-white shadow-sm">
         {/* 왼쪽 로고 */}
         <div className="flex items-center gap-2">
-          <div className="text-xl font-bold text-blue-600">🧠 Gimbab</div>
+          <div className="text-xl font-bold text-blue-600"> Gimbab</div>
         </div>
 
         {/* 중앙 입력창 */}
@@ -193,14 +194,14 @@ export default function App() {
             onClick={handleRun}
             className="px-4 py-1 rounded bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white text-sm font-semibold shadow-md"
           >
-            ▶️ 실행
+            실행
           </button>
         </div>
       </div>
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar nodes={nodes} edges={edges} />
         <div className="flex-1 relative" onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
             nodes={nodes}
