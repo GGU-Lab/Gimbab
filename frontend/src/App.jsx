@@ -18,6 +18,7 @@ import Topbar from '@/components/panels/Topbar';
 import PropertyPanel from '@/components/panels/PropertyPanel';
 import { usePipelineToJson } from '@/hooks/usePipelineToJson';
 import { runPipeline } from '@/services/pipelineAPI';
+import './index.css';
 
 const nodeTypes = {
   inputNode: InputNode,
@@ -42,8 +43,19 @@ export default function App() {
 
   const handleRun = async () => {
     setSelected(null); // ✅ 실행 전에 속성 보기 해제
-    const payload = toJson();
-    console.log("payload: ", payload)
+
+    const graphPayload = {
+      nodes: nodes.map((node) => ({
+        id: node.id,
+        type: convertNodeType(node.type),
+        module: node.data.module || guessModuleFromType(node.type),
+        params: node.data.params || {},
+        evaluators: node.data.evaluators || [],
+      })),
+      edges: edges.map((e) => ({ from: e.source, to: e.target })),
+    };
+
+    logPayload(graphPayload);
     try {
       // const res = await runPipeline(payload);
       // console.log('✅ 실행 결과:', res);
@@ -53,8 +65,9 @@ export default function App() {
 
       // 🧪 모의 실행 결과
       const mockResult = {
-        label: '부정',
-        confidence: 0.92,
+        input: { text: "오늘 너무 졸리다" },
+        model1: [{ label: "부정", score: 0.92 }],
+        output: '[{ "label": "부정", "score": 0.92 }]',
       };
 
       const mockLogs = [
@@ -69,6 +82,40 @@ export default function App() {
       console.error('🚨 실행 실패:', err);
     }
   };
+
+  function logPayload(graphPayload) {
+    console.log("🟩 [Payload] nodes:");
+    graphPayload.nodes.forEach((node) => {
+      console.log(`- ${node.id}: type=${node.type}, module=${node.module}`);
+      if (Object.keys(node.params).length > 0) {
+        console.log("  params:", node.params);
+      }
+      if (node.evaluators.length > 0) {
+        console.log("  evaluators:", node.evaluators);
+      }
+    });
+
+    console.log("🔷 [Payload] edges:");
+    graphPayload.edges.forEach((edge) => {
+      console.log(`- ${edge.from} → ${edge.to}`);
+    });
+
+  }
+
+  function convertNodeType(type) {
+    if (type === "inputNode") return "input";
+    if (type === "outputNode") return "output";
+    if (type === "modelNode") return "model";
+    return "bridge"; // or throw
+  }
+
+  function guessModuleFromType(type) {
+    if (type === "inputNode") return "plain_text";
+    if (type === "outputNode") return "json_output";
+    if (type === "modelNode") return "hf_pipeline_runner";
+    return "bridge_module"; // future
+  }
+
 
   const onConnect = (params) => {
     setEdges((eds) => addEdge({ ...params, type: 'step' }, eds));
@@ -88,7 +135,6 @@ export default function App() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // 캔버스에 드롭 시 노드 추가
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
@@ -101,11 +147,17 @@ export default function App() {
         y: event.clientY - bounds.top,
       };
 
+      const nodeIdString = `node-${nodeId++}`;
+
       const newNode = {
-        id: `node-${nodeId++}`,
+        id: nodeIdString,
         type,
         position,
-        data: { label: `New ${type}` },
+        data: {
+          module: '',
+          params: {},
+          evaluators: [],
+        },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -113,11 +165,43 @@ export default function App() {
     [setNodes]
   );
 
+
   return (
-    <div className="w-screen h-screen flex flex-col">
-      <Topbar onRun={handleRun} />
+    <div className="w-screen h-screen flex flex-col bg-gray-50">
+      {/* Topbar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-white shadow-sm">
+        {/* 왼쪽 로고 */}
+        <div className="flex items-center gap-2">
+          <div className="text-xl font-bold text-blue-600"> Gimbab</div>
+        </div>
+
+        {/* 중앙 입력창 */}
+        <div className="flex-1 flex justify-center px-4">
+          <input
+            type="text"
+            placeholder="텍스트 입력..."
+            className="w-full max-w-lg border border-gray-300 px-4 py-1 rounded text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        {/* 오른쪽 버튼 영역 */}
+        <div className="flex items-center gap-2">
+          <label className="cursor-pointer text-xs px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 shadow-sm">
+            📎 파일 선택
+            <input type="file" hidden />
+          </label>
+          <button
+            onClick={handleRun}
+            className="px-4 py-1 rounded bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white text-sm font-semibold shadow-md"
+          >
+            실행
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar nodes={nodes} edges={edges} />
         <div className="flex-1 relative" onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
             nodes={nodes}
@@ -128,17 +212,20 @@ export default function App() {
             onInit={onInit}
             nodeTypes={nodeTypes}
             fitView
-            onNodeClick={(_, node) => { setSelected(node); setResult(null); setLogs([]); }}
+            onNodeClick={(_, node) => {
+              setSelected(node);
+              setResult(null);
+              setLogs([]);
+            }}
           >
             <Background color="#e5e7eb" />
             <MiniMap />
             <Controls position="bottom-left" />
           </ReactFlow>
         </div>
-        <PropertyPanel selectedNode={selected} result={result} logs={logs} />
-
-
+        <PropertyPanel selectedNode={selected} setNodes={setNodes} result={result} />
       </div>
     </div>
+
   );
 }
