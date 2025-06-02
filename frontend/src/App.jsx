@@ -7,6 +7,7 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow 
 } from '@xyflow/react';
 
 import InputNode from '@/components/nodes/InputNode';
@@ -36,8 +37,6 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [result, setResult] = useState(null);
   const [logs, setLogs] = useState([]);
-
-
 
   const toJson = usePipelineToJson(nodes, edges);
 
@@ -118,13 +117,19 @@ export default function App() {
 
 
   const onConnect = (params) => {
-    setEdges((eds) => addEdge({ ...params, type: 'step' }, eds));
-    console.log("connect: ", edges)
+    setEdges((eds) => {
+      const isDuplicate = eds.some(
+        (e) => e.source === params.source && e.target === params.target
+      );
+      if (isDuplicate) return eds;
+      return addEdge({ ...params, type: 'step' }, eds);
+    });
   };
+
 
   const onInit = useCallback((instance) => {
     setTimeout(() => {
-      instance.fitView();
+      instance.fitView(); // padding 넓히기
     }, 0);
   }, []);
 
@@ -200,32 +205,49 @@ export default function App() {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
+        {/* 왼쪽 사이드바 */}
         <Sidebar nodes={nodes} edges={edges} />
-        <div className="flex-1 relative" onDrop={onDrop} onDragOver={onDragOver}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onInit={onInit}
-            nodeTypes={nodeTypes}
-            fitView
-            onNodeClick={(_, node) => {
-              setSelected(node);
-              setResult(null);
-              setLogs([]);
-            }}
-          >
-            <Background color="#e5e7eb" />
-            <MiniMap />
-            <Controls position="bottom-left" />
-          </ReactFlow>
+
+        {/* 중앙 플로우 영역 */}
+        <div
+          className="flex-1 relative overflow-visible"
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+        >
+          <div className="w-full h-full">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onInit={onInit}
+              nodeTypes={nodeTypes}
+              fitView
+              onNodeClick={(_, node) => {
+                setSelected(node);
+                setResult(null);
+                setLogs([]);
+              }}
+              className="w-full h-full"
+            >
+              <Background color="#e5e7eb" />
+              <MiniMap />
+              <Controls position="bottom-left" />
+            </ReactFlow>
+          </div>
         </div>
-        <PropertyPanel selectedNode={selected} setNodes={setNodes} result={result} />
+
+        {/* 오른쪽 속성 패널 */}
+        <PropertyPanel
+          selectedNode={selected}
+          setNodes={setNodes}
+          result={result}
+        />
       </div>
     </div>
+
 
   );
 }
