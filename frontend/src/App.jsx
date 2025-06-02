@@ -7,7 +7,7 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
-  useReactFlow 
+  useReactFlow
 } from '@xyflow/react';
 
 import InputNode from '@/components/nodes/InputNode';
@@ -54,29 +54,14 @@ export default function App() {
       edges: edges.map((e) => ({ from: e.source, to: e.target })),
     };
 
+    // payload 출력
     logPayload(graphPayload);
+
     try {
-      // const res = await runPipeline(payload);
-      // console.log('✅ 실행 결과:', res);
-      // TODO: 실행 로그 state에 저장하여 우측 패널에서 표시
-      // setResult(res.result);
-      // setLogs(res.execution_logs);
-
-      // 🧪 모의 실행 결과
-      const mockResult = {
-        input: { text: "오늘 너무 졸리다" },
-        model1: [{ label: "부정", score: 0.92 }],
-        output: '[{ "label": "부정", "score": 0.92 }]',
-      };
-
-      const mockLogs = [
-        { step: 'text_input', elapsed: 0.01 },
-        { step: 'kcbert_sentiment', elapsed: 0.78 },
-        { step: 'json_output', elapsed: 0.03 },
-      ];
-
-      setResult(mockResult);
-      setLogs(mockLogs);
+      const res = await runPipeline(graphPayload);
+      console.log('✅ 실행 결과:', res);
+      setResult(res.result);
+      setLogs(res.execution_logs);
     } catch (err) {
       console.error('🚨 실행 실패:', err);
     }

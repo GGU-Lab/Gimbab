@@ -153,7 +153,6 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
         </div>
 
         {/* Params */}
-        {selectedNode.type === 'modelNode' && (
           <div className="p-2 rounded border bg-purple-50 shadow-sm">
             <label className="block text-xs font-semibold text-purple-700 mb-2">⚙️ Params</label>
             <div className="space-y-1">
@@ -194,7 +193,6 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
             </div>
             <AddParam onAdd={(key) => updateParam(key, '')} />
           </div>
-        )}
 
         {/* Evaluators */}
         <div className="p-2 rounded border bg-pink-50 shadow-sm">
@@ -239,8 +237,8 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
       </div>
     </div>
   );
-
 }
+
 function AddParam({ onAdd }) {
   const [newKey, setNewKey] = useState('');
 
