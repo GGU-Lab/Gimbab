@@ -6,6 +6,7 @@
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 
@@ -14,6 +15,20 @@ from pipeline_graph_runner import run_pipeline_graph
 
 # ✅ FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True, # 자격 증명 (쿠키, HTTP 인증) 허용 여부
+    allow_methods=["*"],    # 모든 HTTP 메서드 (GET, POST, PUT, DELETE, OPTIONS 등) 허용
+    allow_headers=["*"],    # 모든 헤더 허용
+)
 
 # -----------------------------------------
 # 📌 입력 요청 바디 구조 정의
