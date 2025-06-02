@@ -2,7 +2,6 @@ import importlib
 
 # ------------------------------------------------------
 # 📦 모듈 유형 → 실제 import 경로 기본 패키지 매핑
-# - 모듈 타입(input/model/output 등)에 따라 import 경로 prefix 설정
 # ------------------------------------------------------
 TYPE_TO_PACKAGE = {
     "input": "adapters.input",
@@ -13,50 +12,43 @@ TYPE_TO_PACKAGE = {
 }
 
 # ------------------------------------------------------
-# 📌 커스텀 명령어 alias (모듈 명 → 실제 import 경로)
-# - 가독성을 위해 추상화된 모듈 이름을 실제 경로로 매핑
-# - 예: "text-model" → "models"
+# 📌 모델 alias 정의 (model 타입 전용)
 # ------------------------------------------------------
 MODULE_ALIASES = {
     "text-model": "models",
-    "vision-model": "models.vision",    
+    "vision-model": "models.vision",
     "audio-model": "models.audio",
     "multimodal-model": "models.multimodal"
-    # 🔧 확장 가능: 필요 시 여기에 추가
+    # 🔧 확장 가능
 }
 
 # ------------------------------------------------------
-# 📌 동적 모듈 로딩 함수
-# - 지정된 타입과 이름을 기반으로 importlib을 통해 모듈 동적 import
-# - alias 등록 여부에 따라 처리 경로가 달라짐
+# 📌 모듈 로딩 함수 (text.모델명 구조 기준)
 # ------------------------------------------------------
 def load_module(module_type: str, module_name: str):
     """
-    ✅ 동적으로 모듈을 import하여 반환
+    ✅ 모듈 타입과 이름 기반으로 importlib을 통해 동적 import
 
-    - TYPE_TO_PACKAGE + module_name 조합으로 기본 경로 구성
-    - 또는 MODULE_ALIASES에 등록된 이름인 경우 실제 경로로 해석
-
-    예:
-    - ("model", "text-model") → models (text dispatcher)
-    - ("model", "vision-model") → models.vision
-    - ("bridge", "text.from_ner") → adapters.bridge.text.from_ner
+    사용 예:
+    - ("input", "text.zero_shot_input")    → adapters.input.text.zero_shot_input
+    - ("bridge", "text.from_translation")  → adapters.bridge.text.from_translation
+    - ("model", "text-model")              → models  (alias 처리)
+    - ("model", "my_model")                → models.my_model
     """
 
-    # 🚨 예외처리: 지원하지 않는 모듈 유형
+    # 🚫 지원되지 않는 타입 예외 처리
     if module_type not in TYPE_TO_PACKAGE:
         raise ValueError(f"❌ Unknown module type: {module_type}")
 
-    # ✅ alias로 등록된 모델 이름인 경우 → alias 경로로 import
+    # 🎯 alias 적용 (model 전용)
     if module_type == "model" and module_name in MODULE_ALIASES:
         resolved_path = MODULE_ALIASES[module_name]
         return importlib.import_module(resolved_path)
 
-    # 🔄 일반 경로 조합: 기본 패키지 + 모듈 이름
+    # 📦 경로 조합
     base_package = TYPE_TO_PACKAGE[module_type]
     full_path = f"{base_package}.{module_name}"
 
-    # 📥 import 시도 + 예외 처리 래핑
     try:
         return importlib.import_module(full_path)
     except ImportError as e:
