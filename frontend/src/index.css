@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@import '@xyflow/react/dist/style.css';
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -69,3 +69,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
