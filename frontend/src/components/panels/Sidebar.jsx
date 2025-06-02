@@ -4,7 +4,7 @@ const modules = [
   { type: 'outputNode', label: '📤 Output', color: 'bg-purple-100', border: 'border-purple-400' },
 ];
 
-export default function Sidebar({ nodes = [], edges = [] }) {
+export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) {
   const handleDragStart = (event, type) => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
@@ -34,11 +34,55 @@ export default function Sidebar({ nodes = [], edges = [] }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = reader.result;
+        const data = JSON.parse(text);
+
+        if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+          throw new Error('Invalid structure');
+        }
+
+        const importedNodes = data.nodes.map((n) => ({
+          id: n.id,
+          type: convertNodeTypeToReact(n.type),
+          position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+          data: {
+            module: n.module || '',
+            params: n.params || {},
+            evaluators: n.evaluators || [],
+          },
+        }));
+
+        const importedEdges = data.edges.map((e, idx) => ({
+          id: `e-${e.from}-${e.to}-${idx}`,
+          source: e.from,
+          target: e.to,
+          type: 'smoothstep',
+        }));
+
+        setNodes(importedNodes);
+        setEdges(importedEdges);
+      } catch (err) {
+        console.error('IMPORT ERROR:', err);
+        alert('⚠️ 불러오기 실패: 올바른 JSON 구조인지 확인하세요.');
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+
   return (
     <div className="w-56 h-full p-4 border-r bg-gray-50 shadow-sm flex flex-col justify-between">
       <div>
         <h3 className="text-lg font-semibold mb-4 text-gray-700">📦 모듈 목록</h3>
-        <ul className="space-y-3">
+        <ul className="space-y-3 mb-6">
           {modules.map((mod) => (
             <li
               key={mod.type}
@@ -54,8 +98,22 @@ export default function Sidebar({ nodes = [], edges = [] }) {
             </li>
           ))}
         </ul>
+
+        {/* 📥 불러오기 버튼 */}
+        <label className="block w-full mb-3">
+          <input
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <div className="text-sm px-4 py-2 rounded bg-sky-500 hover:bg-sky-600 text-white text-center font-semibold cursor-pointer transition">
+            📥 불러오기
+          </div>
+        </label>
       </div>
 
+      {/* 📤 내보내기 버튼 */}
       {/* 📤 내보내기 버튼 */}
       <button
         onClick={handleExport}
@@ -76,7 +134,6 @@ export default function Sidebar({ nodes = [], edges = [] }) {
       >
         📤 내보내기
       </button>
-
     </div>
   );
 }
@@ -86,4 +143,11 @@ function convertNodeType(type) {
   if (type === 'modelNode') return 'model';
   if (type === 'outputNode') return 'output';
   return 'bridge';
+}
+
+function convertNodeTypeToReact(type) {
+  if (type === 'input') return 'inputNode';
+  if (type === 'model') return 'modelNode';
+  if (type === 'output') return 'outputNode';
+  return 'bridgeNode';
 }
