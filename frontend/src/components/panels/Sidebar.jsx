@@ -1,7 +1,8 @@
 const modules = [
   { type: 'inputNode', label: '📥 Input', color: 'bg-blue-100', border: 'border-blue-400' },
   { type: 'modelNode', label: '🧠 Model', color: 'bg-green-100', border: 'border-green-400' },
-  { type: 'outputNode', label: '📤 Output', color: 'bg-purple-100', border: 'border-purple-400' },
+  { type: 'bridgeNode', label: '🔗 Bridge', color: 'bg-gray-100', border: 'border-gray-400' },
+  { type: 'outputNode', label: '📤 Output', color: 'bg-purple-100', border: 'border-purple-400' }
 ];
 
 export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) {

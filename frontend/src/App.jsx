@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import InputNode from '@/components/nodes/InputNode';
 import ModelNode from '@/components/nodes/ModelNode';
 import OutputNode from '@/components/nodes/OutputNode';
+import BridgeNode from '@/components/nodes/BridgeNode';
 
 import Sidebar from '@/components/panels/Sidebar';
 import PropertyPanel from '@/components/panels/PropertyPanel';
@@ -18,6 +19,7 @@ const nodeTypes = {
   inputNode: InputNode,
   modelNode: ModelNode,
   outputNode: OutputNode,
+  bridgeNode: BridgeNode,
 };
 
 export default function App() {
