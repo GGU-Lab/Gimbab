@@ -153,46 +153,46 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
         </div>
 
         {/* Params */}
-          <div className="p-2 rounded border bg-purple-50 shadow-sm">
-            <label className="block text-xs font-semibold text-purple-700 mb-2">⚙️ Params</label>
-            <div className="space-y-1">
-              {Object.entries(params).map(([key, value]) => (
-                <div key={key} className="flex items-center gap-1 mb-1">
-                  <input
-                    className="w-1/3 border text-xs px-1 py-0.5 rounded bg-gray-100"
-                    value={key}
-                    readOnly
-                  />
-                  <input
-                    className="flex-1 border text-xs px-1 py-0.5 rounded min-w-0"
-                    value={value}
-                    onChange={(e) => updateParam(key, e.target.value)}
-                  />
-                  <button
-                    onClick={() => deleteParam(key)}
-                    title="삭제"
-                    style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: '#fee2e2',   // red-100
-                      color: '#b91c1c',             // red-700
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                      cursor: 'pointer',
-                      border: 'none',
-                    }}
-                  >
-                    ❌
-                  </button>
+        <div className="p-2 rounded border bg-purple-50 shadow-sm">
+          <label className="block text-xs font-semibold text-purple-700 mb-2">⚙️ Params</label>
+          <div className="space-y-1">
+            {Object.entries(params).map(([key, value]) => (
+              <div key={key} className="flex items-center gap-1 mb-1">
+                <input
+                  className="w-1/3 border text-xs px-1 py-0.5 rounded bg-gray-100"
+                  value={key}
+                  readOnly
+                />
+                <input
+                  className="flex-1 border text-xs px-1 py-0.5 rounded min-w-0"
+                  value={value}
+                  onChange={(e) => updateParam(key, e.target.value)}
+                />
+                <button
+                  onClick={() => deleteParam(key)}
+                  title="삭제"
+                  style={{
+                    fontSize: '12px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#fee2e2',   // red-100
+                    color: '#b91c1c',             // red-700
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                    cursor: 'pointer',
+                    border: 'none',
+                  }}
+                >
+                  ❌
+                </button>
 
-                </div>
-              ))}
+              </div>
+            ))}
 
 
 
-            </div>
-            <AddParam onAdd={(key) => updateParam(key, '')} />
           </div>
+          <AddParam onAdd={(key) => updateParam(key, '')} />
+        </div>
 
         {/* Evaluators */}
         <div className="p-2 rounded border bg-pink-50 shadow-sm">
@@ -214,24 +214,12 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
         {/* Delete button */}
         <div className="mt-6">
           <button
-            onClick={handleDelete}
-            style={{
-              width: '100%',
-              fontSize: '12px',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              backgroundColor: '#ef4444', // red-500
-              color: 'white',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease-in-out',
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')} // red-600
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
-          >
-            🗑️ 노드 삭제
-          </button>
+  onClick={handleDelete}
+  className="w-full text-xs px-3 py-2 rounded-md bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
+>
+  🗑️ 노드 삭제
+</button>
+
 
         </div>
       </div>
