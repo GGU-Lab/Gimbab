@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function PropertyPanel({ selectedNode, setNodes, result }) {
+export default function PropertyPanel({ selectedNode, setNodes, result, setSelected }) {
   const [localId, setLocalId] = useState('');
   const [module, setModule] = useState('');
   const [evaluators, setEvaluators] = useState('');
@@ -41,6 +41,7 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
 
   const handleDelete = () => {
     setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+    if (typeof window !== 'undefined' && typeof setSelected === 'function') setSelected(null);
   };
 
   if (!selectedNode && result) {
@@ -78,20 +79,7 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
         {/* 📤 결과 내보내기 버튼 */}
         <button
           onClick={handleExportResult}
-          style={{
-            marginTop: '1rem',
-            width: '100%',
-            fontSize: '0.75rem', // text-xs
-            padding: '0.5rem 0.75rem', // px-3 py-2
-            borderRadius: '0.375rem',
-            backgroundColor: '#10b981',
-            color: 'white',
-            fontWeight: '600',
-            transition: 'background-color 0.2s ease-in-out',
-            cursor: 'pointer',
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#10b981')}
+          className="mt-4 w-full text-xs px-3 py-2 rounded-md bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors"
         >
           📤 결과 내보내기
         </button>
@@ -157,39 +145,26 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
           <label className="block text-xs font-semibold text-purple-700 mb-2">⚙️ Params</label>
           <div className="space-y-1">
             {Object.entries(params).map(([key, value]) => (
-              <div key={key} className="flex items-center gap-1 mb-1">
+              <div key={key} className="flex items-center gap-1 mb-1 bg-purple-50 rounded px-1 py-1">
                 <input
-                  className="w-1/3 border text-xs px-1 py-0.5 rounded bg-gray-100"
+                  className="w-1/3 border text-xs px-1 py-2 rounded bg-gray-100"
                   value={key}
                   readOnly
                 />
                 <input
-                  className="flex-1 border text-xs px-1 py-0.5 rounded min-w-0"
+                  className="flex-1 border text-xs px-1 py-2 rounded min-w-0"
                   value={value}
                   onChange={(e) => updateParam(key, e.target.value)}
                 />
                 <button
                   onClick={() => deleteParam(key)}
                   title="삭제"
-                  style={{
-                    fontSize: '12px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: '#fee2e2',   // red-100
-                    color: '#b91c1c',             // red-700
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                    cursor: 'pointer',
-                    border: 'none',
-                  }}
+                  className="h-8 w-8 flex items-center justify-center text-lg rounded bg-red-500 text-white font-bold shadow-sm hover:bg-red-700 transition-colors"
                 >
                   ❌
                 </button>
-
               </div>
             ))}
-
-
-
           </div>
           <AddParam onAdd={(key) => updateParam(key, '')} />
         </div>
@@ -210,18 +185,15 @@ export default function PropertyPanel({ selectedNode, setNodes, result }) {
             placeholder="예: runtime_logger, resource_logger"
           />
         </div>
+      </div>
 
-        {/* Delete button */}
-        <div className="mt-6">
-          <button
-  onClick={handleDelete}
-  className="w-full text-xs px-3 py-2 rounded-md bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
->
-  🗑️ 노드 삭제
-</button>
-
-
-        </div>
+      <div className="mt-auto">
+        <button
+          onClick={handleDelete}
+          className="w-full text-base px-3 py-2 rounded-md bg-red-500 text-white font-extrabold hover:bg-red-700 transition-colors"
+        >
+          🗑️ <span className="font-extrabold">노드 삭제</span>
+        </button>
       </div>
     </div>
   );
@@ -231,21 +203,12 @@ function AddParam({ onAdd }) {
   const [newKey, setNewKey] = useState('');
 
   return (
-    <div style={{ marginTop: '8px', display: 'flex', gap: '6px', alignItems: 'center', minWidth: 0 }}>
+    <div className="mt-2 flex gap-2 items-center min-w-0 bg-blue-50 rounded px-1 py-1">
       <input
         placeholder="새 param 키"
         value={newKey}
         onChange={(e) => setNewKey(e.target.value)}
-        style={{
-          flex: 1,
-          fontSize: '12px',
-          padding: '6px 8px',
-          borderRadius: '4px',
-          border: '1px solid #d1d5db', // gray-300
-          backgroundColor: '#ffffff',
-          minWidth: 0,
-          color: '#111827',
-        }}
+        className="flex-1 text-xs px-2 py-2 rounded border border-gray-300 bg-white min-w-0 text-gray-900"
       />
       <button
         onClick={() => {
@@ -254,17 +217,7 @@ function AddParam({ onAdd }) {
             setNewKey('');
           }
         }}
-        style={{
-          fontSize: '12px',
-          padding: '6px 10px',
-          borderRadius: '4px',
-          fontWeight: 500,
-          backgroundColor: '#2563eb', // blue-600
-          color: '#ffffff',
-          border: 'none',
-          cursor: 'pointer',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-        }}
+        className="h-8 px-4 flex items-center justify-center text-sm rounded font-semibold bg-blue-600 text-white shadow-sm hover:bg-blue-800 transition-colors"
       >
         ➕ 추가
       </button>

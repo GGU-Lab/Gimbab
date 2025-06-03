@@ -1,0 +1,17 @@
+{
+  "node-1": {
+    "text": "fuck"
+  },
+  "node-2": [
+    {
+      "label": "NEGATIVE",
+      "score": 0.9979002475738525
+    }
+  ],
+  "node-3": [
+    {
+      "label": "NEGATIVE",
+      "score": 0.9979002475738525
+    }
+  ]
+}

@@ -46,7 +46,12 @@ export default function App() {
     <div className="w-screen h-screen flex flex-col bg-gray-50">
       <Topbar onRun={handleRun} />
       <div className="flex flex-1">
-        <Sidebar nodes={nodes} edges={edges} />
+        <Sidebar
+          nodes={nodes}
+          edges={edges}
+          setNodes={setNodes}
+          setEdges={setEdges}
+        />
         <div className="flex-1 relative" onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
             nodes={nodes}

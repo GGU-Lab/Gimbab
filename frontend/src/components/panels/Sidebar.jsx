@@ -18,6 +18,7 @@ export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) 
         module: n.data?.module || '',
         params: n.data?.params || {},
         evaluators: n.data?.evaluators || [],
+        position: n.position ? { x: n.position.x, y: n.position.y } : { x: 0, y: 0 },
       })),
       edges: edges.map((e) => ({ from: e.source, to: e.target })),
     };
@@ -43,7 +44,6 @@ export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) 
       try {
         const text = reader.result;
         const data = JSON.parse(text);
-
         if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
           throw new Error('Invalid structure');
         }
@@ -51,7 +51,9 @@ export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) 
         const importedNodes = data.nodes.map((n) => ({
           id: n.id,
           type: convertNodeTypeToReact(n.type),
-          position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+          position: n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number'
+            ? { x: n.position.x, y: n.position.y }
+            : { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
           data: {
             module: n.module || '',
             params: n.params || {},
@@ -98,9 +100,11 @@ export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) 
             </li>
           ))}
         </ul>
+      </div>
 
-        {/* 📥 불러오기 버튼 */}
-        <label className="block w-full mb-3">
+      {/* 하단 버튼 영역 */}
+      <div className="flex flex-col gap-2 mt-4">
+        <label className="block w-full">
           <input
             type="file"
             accept="application/json"
@@ -111,29 +115,25 @@ export default function Sidebar({ nodes = [], edges = [], setNodes, setEdges }) 
             📥 불러오기
           </div>
         </label>
+        <button
+          onClick={handleExport}
+          style={{
+            width: '100%',
+            fontSize: '0.875rem', // text-sm
+            padding: '0.5rem 1rem', // px-4 py-2
+            borderRadius: '0.375rem',
+            backgroundColor: '#10b981', // emerald-500
+            color: 'white',
+            fontWeight: '600',
+            transition: 'background-color 0.2s ease-in-out',
+            cursor: 'pointer',
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#059669')} // emerald-600
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#10b981')}
+        >
+          📤 내보내기
+        </button>
       </div>
-
-      {/* 📤 내보내기 버튼 */}
-      {/* 📤 내보내기 버튼 */}
-      <button
-        onClick={handleExport}
-        style={{
-          marginTop: '1.5rem',
-          width: '100%',
-          fontSize: '0.875rem', // text-sm
-          padding: '0.5rem 1rem', // px-4 py-2
-          borderRadius: '0.375rem',
-          backgroundColor: '#10b981', // emerald-500
-          color: 'white',
-          fontWeight: '600',
-          transition: 'background-color 0.2s ease-in-out',
-          cursor: 'pointer',
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#059669')} // emerald-600
-        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#10b981')}
-      >
-        📤 내보내기
-      </button>
     </div>
   );
 }
